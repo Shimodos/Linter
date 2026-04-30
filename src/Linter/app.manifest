@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="Linter.app" />
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!--
+          Run as invoker. We deliberately do NOT request administrator:
+          a low-level keyboard hook (WH_KEYBOARD_LL) does not need it,
+          and elevated processes are easier to break and harder to trust.
+          Note: input sent to elevated foreground windows will be blocked
+          by UIPI — that is a Windows security feature, not a bug.
+        -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+
+  <!--
+    DPI awareness is configured via the <ApplicationHighDpiMode>
+    project property — WinForms 6+ rejects the manifest-side
+    declaration with WFAC010.
+  -->
+
+</assembly>
