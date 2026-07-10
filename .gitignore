@@ -90,3 +90,6 @@ secrets.json
 # Saved user settings end up in %AppData%\Linter, not in repo,
 # but ignore any local copies just in case.
 linter-settings.json
+
+# ---- Local tooling ----
+.claude/
