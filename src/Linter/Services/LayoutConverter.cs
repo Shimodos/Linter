@@ -1,13 +1,14 @@
 using System;
+using Linter.Diagnostics;
 using Linter.Keyboard;
 using Linter.Text;
 
 namespace Linter.Services;
 
 /// <summary>
-/// The Punto-style core: given the word the user just typed under the
-/// "wrong" layout, find the layout under which it spells a real word, and
-/// rewrite it in place — backspace the original, switch layouts, retype.
+/// Phrase-level Punto: render the user's whole phrase under every other
+/// installed layout, pick the one where the most words are real, and
+/// rewrite it in place.
 /// </summary>
 internal sealed class LayoutConverter
 {
@@ -24,36 +25,72 @@ internal sealed class LayoutConverter
 
     public bool ConvertLastWord(WordSnapshot snapshot)
     {
-        if (snapshot.IsEmpty) return false;
+        Log.Trace($"convert hotkey | buffer=\"{snapshot.Text}\" trailing=\"{Visible(snapshot.Trailing)}\" strokes={snapshot.Strokes.Count}");
+        if (snapshot.IsEmpty)
+        {
+            Log.Trace("  -> buffer empty, nothing to do");
+            return false;
+        }
 
         var current = _switcher.Current;
-        var winner = ChooseBestCandidate(snapshot, current);
-        if (winner is null) return false;
+        Log.Trace($"  current layout=0x{current.ToInt64():X8}");
 
-        Replace(snapshot.Text, winner.Value);
+        var winner = ChooseWinner(snapshot, current);
+        if (winner is null)
+        {
+            Log.Trace("  -> no candidate has any real words, leaving text as-is");
+            return false;
+        }
+
+        Log.Trace($"  -> winner layout=0x{winner.Value.Layout.ToInt64():X8} text=\"{winner.Value.Text}\"");
+        Replace(snapshot, winner.Value);
         return true;
     }
 
-    private LayoutCandidate? ChooseBestCandidate(WordSnapshot snapshot, IntPtr currentLayout)
+    /// <summary>
+    /// Picks the layout whose rendering has the most spell-correct words.
+    /// Returns null if no candidate produces any real word — in that case
+    /// the original text is left alone (better than rewriting it into
+    /// something equally meaningless).
+    /// </summary>
+    private LayoutCandidate? ChooseWinner(WordSnapshot snapshot, IntPtr currentLayout)
     {
-        LayoutCandidate? fallback = null;
+        LayoutCandidate? best = null;
+        var bestCorrect = 0;
 
         foreach (var candidate in LayoutCandidates.ForOtherLayouts(snapshot, currentLayout))
         {
-            if (_spell.IsCorrect(candidate.Text)) return candidate;
-            fallback ??= candidate;
+            var (correct, total) = CountCorrectWords(candidate.Text);
+            Log.Trace($"  candidate layout=0x{candidate.Layout.ToInt64():X8} text=\"{candidate.Text}\" correct={correct}/{total}");
+            if (correct > bestCorrect)
+            {
+                bestCorrect = correct;
+                best = candidate;
+            }
         }
 
-        // No candidate spells a real word. If the original text is itself
-        // misspelled we still offer the first alternative; otherwise we
-        // refuse to "fix" something that wasn't broken.
-        return _spell.IsCorrect(snapshot.Text) ? null : fallback;
+        return bestCorrect > 0 ? best : null;
     }
 
-    private void Replace(string original, LayoutCandidate winner)
+    private (int Correct, int Total) CountCorrectWords(string phrase)
     {
-        _input.Backspace(original.Length);
-        _switcher.SwitchTo(winner.Layout);
-        _input.TypeUnicode(winner.Text);
+        var words = phrase.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return (0, 0);
+        var correct = 0;
+        foreach (var w in words)
+        {
+            if (_spell.IsCorrect(w)) correct++;
+        }
+        return (correct, words.Length);
     }
+
+    private void Replace(WordSnapshot original, LayoutCandidate winner)
+    {
+        _input.Backspace(original.VisibleLength);
+        _switcher.SwitchTo(winner.Layout);
+        _input.TypeUnicode(winner.Text + original.Trailing);
+    }
+
+    private static string Visible(string s)
+        => s.Replace("\r", "\\r").Replace("\n", "\\n").Replace("\t", "\\t");
 }

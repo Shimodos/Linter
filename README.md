@@ -39,7 +39,7 @@ dotnet publish src/Linter/Linter.csproj -c Release -r win-x64 --self-contained t
 
 | Hotkey       | Action                                                |
 |--------------|-------------------------------------------------------|
-| `Pause`      | Convert the last word to the correct layout           |
+| `Right Alt`  | Convert the word currently being typed to the correct layout |
 | `Shift+Pause`| Convert the current selection (planned)               |
 
 Hotkeys are configurable in `%AppData%\Linter\settings.json`.

@@ -2,26 +2,29 @@ namespace Linter.Text;
 
 /// <summary>
 /// Decides what kind of edit a keystroke is, from the buffer's point of
-/// view: does it extend the current word, end it, erase part of it, or
-/// invalidate the buffer entirely (because the cursor has moved away)?
+/// view. The buffer tracks an entire *phrase* (multiple words separated
+/// by spaces), so we distinguish the boundary that ends a word but keeps
+/// the phrase alive (a space) from the one that ends the whole phrase
+/// (punctuation, Enter, Tab — anything that signals "I'm done with that
+/// thought").
 /// </summary>
 internal static class WordBoundary
 {
     public static StrokeKind Classify(KeyStroke stroke)
     {
         if (stroke.IsBackspace) return StrokeKind.Backspace;
-
         if (IsCursorMovement(stroke.VirtualKey)) return StrokeKind.Invalidates;
         if (stroke.IsEscape) return StrokeKind.Invalidates;
 
-        if (stroke.IsEnter || stroke.IsSpace) return StrokeKind.Boundary;
-        if (stroke.VirtualKey == VirtualKeyCodes.Tab) return StrokeKind.Boundary;
+        if (stroke.IsEnter || stroke.VirtualKey == VirtualKeyCodes.Tab)
+            return StrokeKind.HardBoundary;
 
+        if (stroke.IsSpace) return StrokeKind.SoftBoundary;
         if (!stroke.ProducesText) return StrokeKind.Ignored;
 
         return IsLetterLike(stroke.Output)
             ? StrokeKind.Letter
-            : StrokeKind.Boundary;
+            : StrokeKind.HardBoundary;
     }
 
     private static bool IsCursorMovement(uint vk)
@@ -45,9 +48,10 @@ internal static class WordBoundary
 
 internal enum StrokeKind
 {
-    Letter,        // extends current word
-    Backspace,     // shrinks current word
-    Boundary,      // ends current word (space, punctuation, enter)
-    Invalidates,   // cursor moved — drop buffer state
-    Ignored,       // modifier/dead-key/F-keys etc., do nothing
+    Letter,         // extends current word (and current phrase)
+    Backspace,      // shrinks current word/phrase
+    SoftBoundary,   // ends a word but keeps phrase alive (space, tab)
+    HardBoundary,   // ends the whole phrase (punctuation, Enter)
+    Invalidates,    // cursor moved — drop everything
+    Ignored,        // modifier/dead-key/F-keys, do nothing
 }

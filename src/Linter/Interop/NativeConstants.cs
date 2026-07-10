@@ -61,4 +61,11 @@ internal static class NativeConstants
     public const uint SND_ASYNC    = 0x0001;
     public const uint SND_FILENAME = 0x00020000;
     public const uint SND_ALIAS    = 0x00010000;
+
+    // -------- MessageBeep types --------
+    public const uint MB_OK              = 0x00000000;
+    public const uint MB_ICONHAND        = 0x00000010;   // Critical Stop
+    public const uint MB_ICONQUESTION    = 0x00000020;
+    public const uint MB_ICONEXCLAMATION = 0x00000030;
+    public const uint MB_ICONASTERISK    = 0x00000040;
 }

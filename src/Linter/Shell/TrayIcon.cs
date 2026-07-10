@@ -1,7 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using Linter.Configuration;
+using Linter.Diagnostics;
 
 namespace Linter.Shell;
 
@@ -23,6 +26,9 @@ internal sealed class TrayIcon : IDisposable
 
         var menu = new ContextMenuStrip();
         menu.Items.Add(_enabledItem);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(new ToolStripMenuItem("Open log folder", null, (_, _) => OpenLogFolder()));
+        menu.Items.Add(new ToolStripMenuItem("Reset log", null, (_, _) => Log.Reset()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Exit", null, (_, _) => _onExit()));
 
@@ -48,5 +54,13 @@ internal sealed class TrayIcon : IDisposable
     {
         _notify.Visible = false;
         _notify.Dispose();
+    }
+
+    private static void OpenLogFolder()
+    {
+        var dir = Path.GetDirectoryName(Log.Path);
+        if (string.IsNullOrEmpty(dir)) return;
+        Directory.CreateDirectory(dir);
+        Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
     }
 }

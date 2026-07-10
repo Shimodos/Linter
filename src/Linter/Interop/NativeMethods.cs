@@ -34,7 +34,12 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     public static extern short GetKeyState(int nVirtKey);
 
-    [DllImport("user32.dll")]
+    // CharSet.Unicode is REQUIRED here. Without it, StringBuilder is
+    // marshaled as ANSI: ToUnicodeEx writes UTF-16, but the marshaling
+    // layer reads each byte as a char, so 'в' (U+0432) comes back as
+    // '2' (its low byte 0x32) and 'ы' (U+044B) as 'K' — turning "вы"
+    // into "2K".
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int ToUnicodeEx(
         uint wVirtKey,
         uint wScanCode,
@@ -71,4 +76,8 @@ internal static class NativeMethods
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool Beep(uint dwFreq, uint dwDuration);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool MessageBeep(uint uType);
 }

@@ -19,4 +19,13 @@ internal static class VirtualKeyCodes
     public const uint Home = 0x24;
     public const uint End  = 0x23;
     public const uint Tab  = 0x09;
+
+    public const uint LeftShift   = 0xA0;
+    public const uint RightShift  = 0xA1;
+    public const uint LeftCtrl    = 0xA2;
+    public const uint RightCtrl   = 0xA3;
+    public const uint LeftAlt     = 0xA4;
+    public const uint RightAlt    = 0xA5;
+    public const uint LeftWin     = 0x5B;
+    public const uint RightWin    = 0x5C;
 }

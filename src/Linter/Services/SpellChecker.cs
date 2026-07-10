@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Linter.Diagnostics;
 using Linter.Interop.SpellCheck;
+using Linter.Text;
 
 namespace Linter.Services;
 
@@ -23,12 +25,32 @@ internal sealed class SpellChecker : IDisposable
         foreach (var tag in languageTags) Register(tag);
     }
 
-    public bool IsCorrect(string word) => IsCorrectIn(word, _byLanguage.Keys);
+    public bool IsCorrect(string word) => IsCorrect(word, _byLanguage.Keys);
 
-    public bool IsCorrectIn(string word, IEnumerable<string> languageTags)
+    /// <summary>
+    /// Checks <paramref name="word"/> only against the dictionaries listed
+    /// in <paramref name="restrictTo"/>, further filtered by script match.
+    /// If no listed dictionary matches the word's script, returns
+    /// <c>true</c> (we have no opinion — better than spurious beeps).
+    /// </summary>
+    public bool IsCorrect(string word, IEnumerable<string> restrictTo)
     {
         if (string.IsNullOrWhiteSpace(word)) return true;
-        foreach (var tag in languageTags)
+        var script = WordScripts.Detect(word);
+        var matching = new List<string>();
+        foreach (var tag in restrictTo)
+        {
+            if (!_byLanguage.ContainsKey(tag)) continue;
+            var langScript = WordScripts.OfLanguage(tag);
+            if (script == WordScript.Unknown
+                || langScript == WordScript.Unknown
+                || script == langScript)
+            {
+                matching.Add(tag);
+            }
+        }
+        if (matching.Count == 0) return true;
+        foreach (var tag in matching)
         {
             if (CheckOne(tag, word)) return true;
         }
@@ -42,23 +64,47 @@ internal sealed class SpellChecker : IDisposable
         if (_factory.IsSupported(languageTag, out var supported) != 0 || !supported)
         {
             _byLanguage[languageTag] = null;
+            Log.Trace($"spell: {languageTag} NOT supported (dictionary not installed?)");
             return;
         }
         if (_factory.CreateSpellChecker(languageTag, out var checker) == 0)
         {
             _byLanguage[languageTag] = checker;
+            Log.Trace($"spell: {languageTag} ready");
+        }
+        else
+        {
+            Log.Trace($"spell: {languageTag} CreateSpellChecker failed");
         }
     }
 
     private bool CheckOne(string languageTag, string word)
     {
         if (!_byLanguage.TryGetValue(languageTag, out var checker) || checker is null)
+        {
+            Log.Trace($"    spell({languageTag}, \"{word}\"): no dict registered");
             return false;
-        if (checker.Check(word, out var errors) != 0 || errors is null)
+        }
+        // ComprehensiveCheck catches contextual typos that the lighter
+        // Check misses — important here because we feed single words and
+        // Check tends to give them the benefit of the doubt.
+        var hr = checker.ComprehensiveCheck(word, out var errors);
+        if (hr != 0)
+        {
+            Log.Trace($"    spell({languageTag}, \"{word}\"): ComprehensiveCheck hr=0x{hr:X8} → assume correct");
             return true;
+        }
+        if (errors is null)
+        {
+            Log.Trace($"    spell({languageTag}, \"{word}\"): ComprehensiveCheck returned null enumerator → assume correct");
+            return true;
+        }
         try
         {
-            return errors.Next(out var first) != 0 || first is null;
+            var nextHr = errors.Next(out var first);
+            var noErrors = nextHr != 0 || first is null;
+            Log.Trace($"    spell({languageTag}, \"{word}\"): nextHr=0x{nextHr:X8} first={(first is null ? "null" : "ERROR")} → {(noErrors ? "correct" : "MISSPELLED")}");
+            return noErrors;
         }
         finally
         {

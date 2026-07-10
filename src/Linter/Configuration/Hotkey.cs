@@ -20,8 +20,23 @@ internal sealed class Hotkey
     }
 
     public bool Matches(KeyStroke stroke)
-        => stroke.VirtualKey == VirtualKey
-        && Normalize(stroke.Modifiers) == Normalize(Modifiers);
+    {
+        if (stroke.VirtualKey != VirtualKey) return false;
+        // When the hotkey itself is a modifier (Alt, Ctrl, Shift, Win), its
+        // own bit will be set in stroke.Modifiers — the press of Alt is
+        // both "Alt held" and "Alt pressed". Mask it out before comparing.
+        var captured = Normalize(stroke.Modifiers) & ~SelfModifier(VirtualKey);
+        return captured == Normalize(Modifiers);
+    }
 
     private static KeyModifiers Normalize(KeyModifiers mods) => mods & ~KeyModifiers.CapsLock;
+
+    private static KeyModifiers SelfModifier(uint vk) => vk switch
+    {
+        VirtualKeyCodes.LeftShift  or VirtualKeyCodes.RightShift => KeyModifiers.Shift,
+        VirtualKeyCodes.LeftCtrl   or VirtualKeyCodes.RightCtrl  => KeyModifiers.Control,
+        VirtualKeyCodes.LeftAlt    or VirtualKeyCodes.RightAlt   => KeyModifiers.Alt,
+        VirtualKeyCodes.LeftWin    or VirtualKeyCodes.RightWin   => KeyModifiers.Win,
+        _ => KeyModifiers.None,
+    };
 }
