@@ -33,5 +33,27 @@ internal sealed class AppSettings
         "uk-UA",
     };
 
+    /// <summary>
+    /// Words the tool must leave alone: never beep on them, and never let
+    /// them drag a conversion candidate's score. For nicknames, brands,
+    /// slang and abbreviations no dictionary knows (e.g. "GitHub", "xD").
+    /// Matched case-insensitively.
+    /// </summary>
+    public List<string> IgnoredWords { get; set; } = new();
+
+    /// <summary>
+    /// Foreground process names (without <c>.exe</c>) where the hook should
+    /// stay completely passive — no conversion, no spell signal. Useful for
+    /// remote-desktop clients, games, or terminals that resent injected
+    /// input. Matched case-insensitively.
+    /// </summary>
+    public List<string> ExcludedProcesses { get; set; } = new();
+
+    /// <summary>
+    /// Optional path to a <c>.wav</c> played instead of the system beep on a
+    /// detected misspelling. Falls back to the beep if null or missing.
+    /// </summary>
+    public string? SoundFile { get; set; }
+
     public HotkeyConfig Hotkeys { get; set; } = new();
 }

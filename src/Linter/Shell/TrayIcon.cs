@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows.Forms;
 using Linter.Configuration;
 using Linter.Diagnostics;
+using Linter.Services;
 
 namespace Linter.Shell;
 
@@ -15,6 +16,7 @@ internal sealed class TrayIcon : IDisposable
     private readonly Action _onExit;
     private readonly NotifyIcon _notify;
     private readonly ToolStripMenuItem _enabledItem;
+    private readonly ToolStripMenuItem _autostartItem;
 
     public TrayIcon(AppSettings settings, Action onToggle, Action onExit)
     {
@@ -23,9 +25,11 @@ internal sealed class TrayIcon : IDisposable
         _onExit = onExit;
 
         _enabledItem = new ToolStripMenuItem("Enabled", null, (_, _) => _onToggle());
+        _autostartItem = new ToolStripMenuItem("Start with Windows", null, (_, _) => ToggleAutostart());
 
         var menu = new ContextMenuStrip();
         menu.Items.Add(_enabledItem);
+        menu.Items.Add(_autostartItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Open log folder", null, (_, _) => OpenLogFolder()));
         menu.Items.Add(new ToolStripMenuItem("Reset log", null, (_, _) => Log.Reset()));
@@ -47,7 +51,14 @@ internal sealed class TrayIcon : IDisposable
     public void Refresh()
     {
         _enabledItem.Checked = _settings.Enabled;
+        _autostartItem.Checked = AutostartManager.IsEnabled();
         _notify.Text = _settings.Enabled ? "Linter — on" : "Linter — off";
+    }
+
+    private void ToggleAutostart()
+    {
+        AutostartManager.Set(!AutostartManager.IsEnabled());
+        _autostartItem.Checked = AutostartManager.IsEnabled();
     }
 
     public void Dispose()

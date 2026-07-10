@@ -67,10 +67,6 @@ internal sealed class WordBuffer
         _lastCompleted = WordSnapshot.Empty;
     }
 
-    public void ResetCurrent() => _strokes.Clear();
-
-    public void ForgetLastCompleted() => _lastCompleted = WordSnapshot.Empty;
-
     private WordTransition OnSoftBoundary(KeyStroke stroke)
     {
         // The soft boundary completes a word but keeps the phrase alive,

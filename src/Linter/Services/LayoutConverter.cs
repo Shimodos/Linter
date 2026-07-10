@@ -23,13 +23,18 @@ internal sealed class LayoutConverter
         _spell = spell;
     }
 
-    public bool ConvertLastWord(WordSnapshot snapshot)
+    /// <summary>
+    /// Converts the snapshot in place. Returns the data needed to undo the
+    /// edit, or <c>null</c> if nothing was changed (empty buffer, or no
+    /// candidate produced a real word).
+    /// </summary>
+    public ConversionResult? ConvertLastWord(WordSnapshot snapshot)
     {
         Log.Trace($"convert hotkey | buffer=\"{snapshot.Text}\" trailing=\"{Visible(snapshot.Trailing)}\" strokes={snapshot.Strokes.Count}");
         if (snapshot.IsEmpty)
         {
             Log.Trace("  -> buffer empty, nothing to do");
-            return false;
+            return null;
         }
 
         var current = _switcher.Current;
@@ -39,12 +44,26 @@ internal sealed class LayoutConverter
         if (winner is null)
         {
             Log.Trace("  -> no candidate has any real words, leaving text as-is");
-            return false;
+            return null;
         }
 
         Log.Trace($"  -> winner layout=0x{winner.Value.Layout.ToInt64():X8} text=\"{winner.Value.Text}\"");
         Replace(snapshot, winner.Value);
-        return true;
+        return new ConversionResult(
+            FromLayout: current,
+            FromText:   snapshot.Text,
+            ToLayout:   winner.Value.Layout,
+            ToText:     winner.Value.Text,
+            Trailing:   snapshot.Trailing);
+    }
+
+    /// <summary>Reverses a previous <see cref="ConvertLastWord"/> edit.</summary>
+    public void Undo(ConversionResult conversion)
+    {
+        Log.Trace($"undo | restore \"{conversion.FromText}\" (was \"{conversion.ToText}\")");
+        _input.Backspace(conversion.VisibleLength);
+        _switcher.SwitchTo(conversion.FromLayout);
+        _input.TypeUnicode(conversion.FromText + conversion.Trailing);
     }
 
     /// <summary>

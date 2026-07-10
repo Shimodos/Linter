@@ -16,9 +16,11 @@ internal sealed class SpellChecker : IDisposable
 {
     private readonly ISpellCheckerFactory _factory;
     private readonly Dictionary<string, ISpellChecker?> _byLanguage = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _ignored;
 
-    public SpellChecker(IEnumerable<string> languageTags)
+    public SpellChecker(IEnumerable<string> languageTags, IEnumerable<string>? ignoredWords = null)
     {
+        _ignored = new HashSet<string>(ignoredWords ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
         var type = Type.GetTypeFromCLSID(SpellCheckClsid.SpellCheckerFactory)
                    ?? throw new InvalidOperationException("SpellCheckerFactory CLSID not registered.");
         _factory = (ISpellCheckerFactory)Activator.CreateInstance(type)!;
@@ -36,6 +38,7 @@ internal sealed class SpellChecker : IDisposable
     public bool IsCorrect(string word, IEnumerable<string> restrictTo)
     {
         if (string.IsNullOrWhiteSpace(word)) return true;
+        if (_ignored.Contains(word)) return true;
         var script = WordScripts.Detect(word);
         var matching = new List<string>();
         foreach (var tag in restrictTo)
@@ -85,18 +88,15 @@ internal sealed class SpellChecker : IDisposable
             Log.Trace($"    spell({languageTag}, \"{word}\"): no dict registered");
             return false;
         }
-        // ComprehensiveCheck catches contextual typos that the lighter
-        // Check misses — important here because we feed single words and
-        // Check tends to give them the benefit of the doubt.
-        var hr = checker.ComprehensiveCheck(word, out var errors);
+        var hr = checker.Check(word, out var errors);
         if (hr != 0)
         {
-            Log.Trace($"    spell({languageTag}, \"{word}\"): ComprehensiveCheck hr=0x{hr:X8} → assume correct");
+            Log.Trace($"    spell({languageTag}, \"{word}\"): Check hr=0x{hr:X8} → assume correct");
             return true;
         }
         if (errors is null)
         {
-            Log.Trace($"    spell({languageTag}, \"{word}\"): ComprehensiveCheck returned null enumerator → assume correct");
+            Log.Trace($"    spell({languageTag}, \"{word}\"): Check returned null enumerator → assume correct");
             return true;
         }
         try

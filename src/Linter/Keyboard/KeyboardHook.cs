@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using Linter.Diagnostics;
 using Linter.Interop;
 using Linter.Text;
 
@@ -61,7 +60,6 @@ internal sealed class KeyboardHook : IDisposable
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
         var stroke = StrokeFromHook(data);
-        Log.Trace($"key vk=0x{stroke.VirtualKey:X2} scan=0x{stroke.ScanCode:X2} mods={stroke.Modifiers} output={Quote(stroke.Output)} layout=0x{stroke.Layout.ToInt64():X8}");
         var args = new KeyInterceptedEventArgs(stroke);
         KeyIntercepted?.Invoke(this, args);
 
@@ -84,6 +82,4 @@ internal sealed class KeyboardHook : IDisposable
     }
 
     public void Dispose() => Stop();
-
-    private static string Quote(string s) => s.Length == 0 ? "(empty)" : $"\"{s}\"";
 }

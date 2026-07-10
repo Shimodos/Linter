@@ -37,6 +37,13 @@ internal sealed class LinterApplicationContext : ApplicationContext
     /// </summary>
     private SynchronizationContext? _syncContext;
 
+    /// <summary>
+    /// The most recent conversion, kept so a second hotkey press undoes it.
+    /// Cleared as soon as the user types anything else. Only ever touched on
+    /// the UI thread (hook callback and posted work run on the same thread).
+    /// </summary>
+    private ConversionResult? _pendingUndo;
+
     public LinterApplicationContext()
     {
         _settingsStore = new SettingsStore();
@@ -46,8 +53,8 @@ internal sealed class LinterApplicationContext : ApplicationContext
 
         _input = new InputSimulator();
         _layouts = new LayoutSwitcher();
-        _spell = new SpellChecker(_settings.Languages);
-        _sound = new SoundNotifier();
+        _spell = new SpellChecker(_settings.Languages, _settings.IgnoredWords);
+        _sound = new SoundNotifier(_settings.SoundFile);
 
         _buffer = new WordBuffer();
         _converter = new LayoutConverter(_input, _layouts, _spell);
@@ -63,6 +70,9 @@ internal sealed class LinterApplicationContext : ApplicationContext
     {
         if (!_settings.Enabled) return;
 
+        // Stay completely passive in excluded apps (RDP, games, terminals).
+        if (_settings.ExcludedProcesses.Count > 0 && IsExcludedForeground()) return;
+
         // Capture the sync context the first time we run inside the hook.
         // Inside the LL hook callback we are on the UI thread and the
         // WinForms sync context is fully installed — but we must NOT call
@@ -72,11 +82,28 @@ internal sealed class LinterApplicationContext : ApplicationContext
         if (_settings.Hotkeys.IsConvertHotkey(e.Stroke))
         {
             e.Handled = true;
+
+            // A second press with nothing typed in between undoes the last
+            // conversion instead of trying to convert an empty buffer.
+            if (_pendingUndo is { } undo)
+            {
+                _pendingUndo = null;
+                DeferUndo(undo);
+                return;
+            }
+
             var snapshot = _buffer.Snapshot();
             // Reset synchronously so a second hotkey press doesn't double-convert.
             _buffer.ResetAll();
             DeferConvert(snapshot);
             return;
+        }
+
+        // Any real keystroke invalidates the pending undo (but not bare
+        // modifiers/dead keys, so Shift-then-hotkey still undoes).
+        if (WordBoundary.Classify(e.Stroke) != StrokeKind.Ignored)
+        {
+            _pendingUndo = null;
         }
 
         var transition = _buffer.Apply(e.Stroke);
@@ -86,14 +113,40 @@ internal sealed class LinterApplicationContext : ApplicationContext
         }
     }
 
+    private bool IsExcludedForeground()
+    {
+        var name = ForegroundApp.CurrentProcessName();
+        if (name.Length == 0) return false;
+        foreach (var excluded in _settings.ExcludedProcesses)
+        {
+            if (string.Equals(excluded, name, StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
+    }
+
     private void DeferConvert(WordSnapshot snapshot)
     {
         _syncContext!.Post(static (state) =>
         {
             var (self, snap) = ((LinterApplicationContext, WordSnapshot))state!;
-            try { self._converter.ConvertLastWord(snap); }
+            try
+            {
+                // Remember the edit so the next hotkey press can undo it.
+                // Runs on the UI thread, same as the hook callback that reads it.
+                self._pendingUndo = self._converter.ConvertLastWord(snap);
+            }
             catch (Exception ex) { CrashReporter.Report(ex); }
         }, (this, snapshot));
+    }
+
+    private void DeferUndo(ConversionResult conversion)
+    {
+        _syncContext!.Post(static (state) =>
+        {
+            var (self, c) = ((LinterApplicationContext, ConversionResult))state!;
+            try { self._converter.Undo(c); }
+            catch (Exception ex) { CrashReporter.Report(ex); }
+        }, (this, conversion));
     }
 
     private void DeferSpellCheck(string word)
