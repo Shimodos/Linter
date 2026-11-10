@@ -16,7 +16,7 @@ internal sealed class SpellChecker : IDisposable
 {
     private readonly ISpellCheckerFactory _factory;
     private readonly Dictionary<string, ISpellChecker?> _byLanguage = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _ignored;
+    private HashSet<string> _ignored;
 
     public SpellChecker(IEnumerable<string> languageTags, IEnumerable<string>? ignoredWords = null)
     {
@@ -26,6 +26,91 @@ internal sealed class SpellChecker : IDisposable
         _factory = (ISpellCheckerFactory)Activator.CreateInstance(type)!;
         foreach (var tag in languageTags) Register(tag);
     }
+
+    /// <summary>
+    /// Applies a changed language / ignore list without restarting: drops
+    /// the checkers that are no longer wanted and loads the new ones.
+    /// </summary>
+    public void Reconfigure(IEnumerable<string> languageTags, IEnumerable<string> ignoredWords)
+    {
+        _ignored = new HashSet<string>(ignoredWords, StringComparer.OrdinalIgnoreCase);
+
+        var wanted = new HashSet<string>(languageTags, StringComparer.OrdinalIgnoreCase);
+        foreach (var tag in new List<string>(_byLanguage.Keys))
+        {
+            if (wanted.Contains(tag)) continue;
+            if (_byLanguage[tag] is { } checker) Marshal.FinalReleaseComObject(checker);
+            _byLanguage.Remove(tag);
+        }
+        foreach (var tag in wanted)
+        {
+            if (!_byLanguage.ContainsKey(tag)) Register(tag);
+        }
+    }
+
+    /// <summary>Stops signalling <paramref name="word"/> for the rest of the session.</summary>
+    public void Ignore(string word) => _ignored.Add(word);
+
+    /// <summary>
+    /// The dictionary's best replacement for a misspelled word, or null if
+    /// no dictionary of a matching script has one. Consults the same
+    /// dictionaries, in the same order, as <see cref="IsCorrect(string, IEnumerable{string})"/>.
+    /// </summary>
+    public string? Suggest(string word, IEnumerable<string> restrictTo)
+    {
+        if (string.IsNullOrWhiteSpace(word)) return null;
+        var script = WordScripts.Detect(word);
+        foreach (var tag in restrictTo)
+        {
+            if (!_byLanguage.TryGetValue(tag, out var checker) || checker is null) continue;
+            var langScript = WordScripts.OfLanguage(tag);
+            if (script != WordScript.Unknown && langScript != WordScript.Unknown && script != langScript) continue;
+
+            // A dictionary that accepts the word means there is nothing to fix.
+            // Asked anyway, the API may still offer near-misses ("receive" → "received").
+            if (CheckOne(tag, word)) return null;
+
+            if (checker.Suggest(word, out var suggestions) != 0 || suggestions is null) continue;
+            try
+            {
+                var first = FirstOf(suggestions);
+                Log.Trace($"    suggest({tag}, \"{word}\") → {(first is null ? "nothing" : $"\"{first}\"")}");
+                if (first is not null && !string.Equals(first, word, StringComparison.Ordinal)) return first;
+            }
+            finally
+            {
+                Marshal.FinalReleaseComObject(suggestions);
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Every language Windows currently has a spelling dictionary for.</summary>
+    public IReadOnlyList<string> InstalledLanguages()
+    {
+        var result = new List<string>();
+        if (_factory.get_SupportedLanguages(out var languages) != 0 || languages is null) return result;
+        try
+        {
+            var one = new string[1];
+            while (languages.Next(1, one, IntPtr.Zero) == 0 && one[0] is not null) result.Add(one[0]);
+        }
+        finally
+        {
+            Marshal.FinalReleaseComObject(languages);
+        }
+        return result;
+    }
+
+    private static string? FirstOf(System.Runtime.InteropServices.ComTypes.IEnumString strings)
+    {
+        var one = new string[1];
+        return strings.Next(1, one, IntPtr.Zero) == 0 ? one[0] : null;
+    }
+
+    /// <summary>Whether Windows has a spelling dictionary installed for the tag.</summary>
+    public bool IsLanguageSupported(string languageTag)
+        => _factory.IsSupported(languageTag, out var supported) == 0 && supported;
 
     public bool IsCorrect(string word) => IsCorrect(word, _byLanguage.Keys);
 

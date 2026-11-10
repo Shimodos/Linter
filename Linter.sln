@@ -1,8 +1,12 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Linter", "src\Linter\Linter.csproj", "{B6A4F2C1-1D5E-4A0F-9F2B-3A1E2F4D7C10}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A2B020C1-7211-4C95-96EF-2D50BFD5A381}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Linter.Tests", "tests\Linter.Tests\Linter.Tests.csproj", "{EB2C2944-04D6-453B-95B8-CD8ACF40B7C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,8 +18,15 @@ Global
 		{B6A4F2C1-1D5E-4A0F-9F2B-3A1E2F4D7C10}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B6A4F2C1-1D5E-4A0F-9F2B-3A1E2F4D7C10}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B6A4F2C1-1D5E-4A0F-9F2B-3A1E2F4D7C10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB2C2944-04D6-453B-95B8-CD8ACF40B7C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB2C2944-04D6-453B-95B8-CD8ACF40B7C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB2C2944-04D6-453B-95B8-CD8ACF40B7C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB2C2944-04D6-453B-95B8-CD8ACF40B7C9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EB2C2944-04D6-453B-95B8-CD8ACF40B7C9} = {A2B020C1-7211-4C95-96EF-2D50BFD5A381}
 	EndGlobalSection
 EndGlobal

@@ -10,11 +10,29 @@
     <RootNamespace>Linter</RootNamespace>
     <AssemblyName>Linter</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Version>1.1.0</Version>
+    <Product>Linter</Product>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Linter.Tests" />
+    <InternalsVisibleTo Include="Linter.Snapshot" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Tray / window icons are loaded from the assembly at runtime. -->
+    <EmbeddedResource Include="Assets\*.ico" />
+    <!-- Built-in signal sounds ship as loose files next to the exe. -->
+    <None Update="Sounds\*.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>

@@ -8,6 +8,15 @@ internal static class NativeConstants
 {
     // -------- SetWindowsHookEx --------
     public const int WH_KEYBOARD_LL = 13;
+    public const int WH_MOUSE_LL    = 14;
+
+    // LowLevelMouseProc wParam values we react to
+    public const int WM_LBUTTONDOWN = 0x0201;
+    public const int WM_RBUTTONDOWN = 0x0204;
+    public const int WM_MBUTTONDOWN = 0x0207;
+    public const int WM_XBUTTONDOWN = 0x020B;
+
+    public const uint WM_QUIT = 0x0012;
 
     public const int WM_KEYDOWN    = 0x0100;
     public const int WM_KEYUP      = 0x0101;
@@ -48,6 +57,9 @@ internal static class NativeConstants
     public const int VK_RCONTROL = 0xA3;
     public const int VK_LMENU    = 0xA4;
     public const int VK_RMENU    = 0xA5;
+
+    // -------- MapVirtualKeyEx --------
+    public const uint MAPVK_VK_TO_VSC = 0;
 
     // -------- GetKeyState --------
     public const int KEY_PRESSED = 0x8000;

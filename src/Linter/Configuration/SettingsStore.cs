@@ -28,12 +28,33 @@ internal sealed class SettingsStore
         {
             if (!File.Exists(Path)) return new AppSettings();
             using var stream = File.OpenRead(Path);
-            return JsonSerializer.Deserialize<AppSettings>(stream, JsonOptions) ?? new AppSettings();
+            return Normalize(JsonSerializer.Deserialize<AppSettings>(stream, JsonOptions) ?? new AppSettings());
         }
         catch
         {
             return new AppSettings();
         }
+    }
+
+    /// <summary>
+    /// A hand-edited file may contain explicit <c>null</c>s ("languages": null),
+    /// which the deserializer happily assigns over the defaults. The rest of
+    /// the app assumes the collections exist.
+    /// </summary>
+    private static AppSettings Normalize(AppSettings settings)
+    {
+        var defaults = new AppSettings();
+        settings.Languages ??= defaults.Languages;
+        settings.SpellCheckLanguages ??= defaults.SpellCheckLanguages;
+        settings.IgnoredWords ??= new();
+        settings.ExcludedProcesses ??= new();
+        settings.Hotkeys ??= new();
+        settings.Hotkeys.Convert ??= defaults.Hotkeys.Convert;
+        settings.Hotkeys.ConvertSelection ??= Hotkey.None;
+        settings.Hotkeys.Fix ??= Hotkey.None;
+        settings.Hotkeys.Ignore ??= Hotkey.None;
+        if (string.IsNullOrWhiteSpace(settings.Language)) settings.Language = defaults.Language;
+        return settings;
     }
 
     public void Save(AppSettings settings)
@@ -42,8 +63,14 @@ internal sealed class SettingsStore
         {
             var dir = System.IO.Path.GetDirectoryName(Path);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-            using var stream = File.Create(Path);
-            JsonSerializer.Serialize(stream, settings, JsonOptions);
+            // Write to a sibling file and swap it in, so a crash or power
+            // loss mid-write can't leave a truncated settings.json behind.
+            var temp = Path + ".tmp";
+            using (var stream = File.Create(temp))
+            {
+                JsonSerializer.Serialize(stream, settings, JsonOptions);
+            }
+            File.Move(temp, Path, overwrite: true);
         }
         catch
         {

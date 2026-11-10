@@ -39,6 +39,18 @@ internal sealed class InputSimulator
         Send(inputs);
     }
 
+    /// <summary>Presses <paramref name="key"/> while holding Ctrl — Ctrl+C, Ctrl+V.</summary>
+    public void CtrlChord(char key)
+    {
+        Send(new[]
+        {
+            KeyDown(NativeConstants.VK_CONTROL),
+            KeyDown(key),
+            KeyUp(key),
+            KeyUp(NativeConstants.VK_CONTROL),
+        });
+    }
+
     private static void Send(INPUT[] inputs)
     {
         if (inputs.Length == 0) return;

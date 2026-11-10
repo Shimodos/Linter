@@ -5,7 +5,7 @@ using System.Text;
 namespace Linter.Diagnostics;
 
 /// <summary>
-/// Append-only diagnostic log. Lives at <c>%AppData%\Linter\debug.log</c>.
+/// Opt-in, append-only diagnostic log. Lives at <c>%AppData%\Linter\debug.log</c>.
 /// Single static surface so any layer can call it without dependency
 /// injection — there is exactly one log file per running instance, and
 /// no log can ever block the keyboard hook on a missing-file error.
@@ -18,7 +18,8 @@ internal static class Log
     // file as UTF-8 instead of Windows-1251 (which mangled "→" into "â").
     private static readonly Encoding LogEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
 
-    public static bool Enabled { get; set; } = true;
+    /// <summary>Off until the app turns it on from the <c>debugLog</c> setting.</summary>
+    public static bool Enabled { get; set; }
 
     public static string Path { get; } = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

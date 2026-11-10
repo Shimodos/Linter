@@ -10,13 +10,24 @@ namespace Linter.Keyboard;
 /// WM_SYSKEYDOWN into a <see cref="KeyStroke"/> and raises
 /// <see cref="KeyIntercepted"/>. If a handler sets <c>Handled = true</c>,
 /// the key is swallowed before reaching the foreground application.
+/// Key releases are never swallowed; they are only reported.
 /// </summary>
 internal sealed class KeyboardHook : IDisposable
 {
     private readonly NativeMethods.LowLevelKeyboardProc _proc;
     private IntPtr _hookHandle;
 
+    /// <summary>
+    /// The key most recently pressed and not yet released. Auto-repeat only
+    /// ever repeats the last key pressed, so one slot is enough to tell a
+    /// repeat from a fresh press.
+    /// </summary>
+    private uint _heldKey;
+
     public event EventHandler<KeyInterceptedEventArgs>? KeyIntercepted;
+
+    /// <summary>Raised with the virtual-key code when a physical key is released.</summary>
+    public event Action<uint>? KeyReleased;
 
     public KeyboardHook()
     {
@@ -49,7 +60,8 @@ internal sealed class KeyboardHook : IDisposable
 
         var msg = (int)wParam;
         var isKeyDown = msg is NativeConstants.WM_KEYDOWN or NativeConstants.WM_SYSKEYDOWN;
-        if (!isKeyDown)
+        var isKeyUp = msg is NativeConstants.WM_KEYUP or NativeConstants.WM_SYSKEYUP;
+        if (!isKeyDown && !isKeyUp)
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
         var data = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
@@ -59,8 +71,18 @@ internal sealed class KeyboardHook : IDisposable
         if ((data.Flags & NativeConstants.LLKHF_INJECTED) != 0)
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
+        if (isKeyUp)
+        {
+            if (data.VkCode == _heldKey) _heldKey = 0;
+            KeyReleased?.Invoke(data.VkCode);
+            return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+        }
+
+        var isRepeat = data.VkCode == _heldKey;
+        _heldKey = data.VkCode;
+
         var stroke = StrokeFromHook(data);
-        var args = new KeyInterceptedEventArgs(stroke);
+        var args = new KeyInterceptedEventArgs(stroke, isRepeat);
         KeyIntercepted?.Invoke(this, args);
 
         return args.Handled

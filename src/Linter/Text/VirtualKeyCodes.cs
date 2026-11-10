@@ -19,6 +19,12 @@ internal static class VirtualKeyCodes
     public const uint Home = 0x24;
     public const uint End  = 0x23;
     public const uint Tab  = 0x09;
+    public const uint PageUp     = 0x21;
+    public const uint PageDown   = 0x22;
+    public const uint Delete     = 0x2E;
+    public const uint Insert     = 0x2D;
+    public const uint F1         = 0x70; // F1..F12 are contiguous: F1 + n
+    public const uint ScrollLock = 0x91;
 
     public const uint LeftShift   = 0xA0;
     public const uint RightShift  = 0xA1;
@@ -28,4 +34,19 @@ internal static class VirtualKeyCodes
     public const uint RightAlt    = 0xA5;
     public const uint LeftWin     = 0x5B;
     public const uint RightWin    = 0x5C;
+
+    // Side-agnostic codes: what an application sees, and occasionally what
+    // the hook reports for injected or remapped keys.
+    public const uint Shift    = 0x10;
+    public const uint Control  = 0x11;
+    public const uint Alt      = 0x12;
+    public const uint CapsLock = 0x14;
+
+    /// <summary>Keys that only change the meaning of other keys and type nothing themselves.</summary>
+    public static bool IsModifier(uint vk)
+        => vk is Shift or Control or Alt or CapsLock
+              or LeftShift or RightShift
+              or LeftCtrl or RightCtrl
+              or LeftAlt or RightAlt
+              or LeftWin or RightWin;
 }

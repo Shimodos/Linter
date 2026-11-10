@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Renders the settings window to PNG files for the README and the website,
+    without starting Linter itself (no keyboard hook, no tray icon, nothing saved).
+    Run it with "dotnet run", passing the project (tools/snapshot) and an output folder.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Linter.Snapshot</AssemblyName>
+    <RootNamespace>Linter.Snapshot</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Linter\Linter.csproj" />
+  </ItemGroup>
+
+</Project>

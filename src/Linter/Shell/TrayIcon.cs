@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows.Forms;
 using Linter.Configuration;
 using Linter.Diagnostics;
+using Linter.Localization;
 using Linter.Services;
 
 namespace Linter.Shell;
@@ -13,32 +14,60 @@ internal sealed class TrayIcon : IDisposable
 {
     private readonly AppSettings _settings;
     private readonly Action _onToggle;
-    private readonly Action _onExit;
+    private readonly Func<string?> _lastFlaggedWord;
     private readonly NotifyIcon _notify;
+    private readonly Icon _iconOn;
+    private readonly Icon _iconOff;
+
+    private readonly ToolStripMenuItem _settingsItem;
     private readonly ToolStripMenuItem _enabledItem;
     private readonly ToolStripMenuItem _autostartItem;
+    private readonly ToolStripMenuItem _ignoreItem;
+    private readonly ToolStripMenuItem _openLogItem;
+    private readonly ToolStripMenuItem _resetLogItem;
+    private readonly ToolStripMenuItem _exitItem;
 
-    public TrayIcon(AppSettings settings, Action onToggle, Action onExit)
+    public TrayIcon(
+        AppSettings settings,
+        Action onToggle,
+        Action onSettings,
+        Action onExit,
+        Func<string?> lastFlaggedWord,
+        Action onIgnoreLastFlagged)
     {
         _settings = settings;
         _onToggle = onToggle;
-        _onExit = onExit;
+        _lastFlaggedWord = lastFlaggedWord;
 
-        _enabledItem = new ToolStripMenuItem("Enabled", null, (_, _) => _onToggle());
-        _autostartItem = new ToolStripMenuItem("Start with Windows", null, (_, _) => ToggleAutostart());
+        _iconOn = AppIcons.Load(AppIcons.On, SystemInformation.SmallIconSize);
+        _iconOff = AppIcons.Load(AppIcons.Off, SystemInformation.SmallIconSize);
+
+        // Texts are assigned in Refresh, so a language change only needs a Refresh.
+        _settingsItem = new ToolStripMenuItem(string.Empty, null, (_, _) => onSettings());
+        _enabledItem = new ToolStripMenuItem(string.Empty, null, (_, _) => _onToggle());
+        _autostartItem = new ToolStripMenuItem(string.Empty, null, (_, _) => ToggleAutostart());
+        _ignoreItem = new ToolStripMenuItem(string.Empty, null, (_, _) => onIgnoreLastFlagged());
+        _openLogItem = new ToolStripMenuItem(string.Empty, null, (_, _) => OpenLogFolder());
+        _resetLogItem = new ToolStripMenuItem(string.Empty, null, (_, _) => Log.Reset());
+        _exitItem = new ToolStripMenuItem(string.Empty, null, (_, _) => onExit());
 
         var menu = new ContextMenuStrip();
+        menu.Items.Add(_settingsItem);
+        menu.Items.Add(_ignoreItem);
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_enabledItem);
         menu.Items.Add(_autostartItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(new ToolStripMenuItem("Open log folder", null, (_, _) => OpenLogFolder()));
-        menu.Items.Add(new ToolStripMenuItem("Reset log", null, (_, _) => Log.Reset()));
+        menu.Items.Add(_openLogItem);
+        menu.Items.Add(_resetLogItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(new ToolStripMenuItem("Exit", null, (_, _) => _onExit()));
+        menu.Items.Add(_exitItem);
+        // The word to ignore changes as the user types; look it up when the menu opens.
+        menu.Opening += (_, _) => RefreshIgnoreItem();
 
         _notify = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = _iconOn,
             Visible = true,
             Text = "Linter",
             ContextMenuStrip = menu,
@@ -50,9 +79,26 @@ internal sealed class TrayIcon : IDisposable
 
     public void Refresh()
     {
+        _settingsItem.Text = Localizer.T("tray.settings");
+        _enabledItem.Text = Localizer.T("tray.enabled");
+        _autostartItem.Text = Localizer.T("tray.autostart");
+        _openLogItem.Text = Localizer.T("tray.openLog");
+        _resetLogItem.Text = Localizer.T("tray.resetLog");
+        _exitItem.Text = Localizer.T("tray.exit");
+        RefreshIgnoreItem();
+
         _enabledItem.Checked = _settings.Enabled;
         _autostartItem.Checked = AutostartManager.IsEnabled();
-        _notify.Text = _settings.Enabled ? "Linter — on" : "Linter — off";
+        _notify.Icon = _settings.Enabled ? _iconOn : _iconOff;
+        _notify.Text = Localizer.T(_settings.Enabled ? "tray.on" : "tray.off");
+    }
+
+    private void RefreshIgnoreItem()
+    {
+        var word = _lastFlaggedWord();
+        _ignoreItem.Visible = word is not null;
+        // "&" would be read as a menu accelerator marker.
+        if (word is not null) _ignoreItem.Text = Localizer.T("tray.ignore", word.Replace("&", "&&"));
     }
 
     private void ToggleAutostart()
@@ -65,6 +111,8 @@ internal sealed class TrayIcon : IDisposable
     {
         _notify.Visible = false;
         _notify.Dispose();
+        _iconOn.Dispose();
+        _iconOff.Dispose();
     }
 
     private static void OpenLogFolder()

@@ -73,7 +73,7 @@ internal sealed class WordBuffer
         // so the boundary stroke itself joins the phrase as a separator.
         var word = ExtractTrailingWord();
         _strokes.Add(stroke);
-        return word.Length == 0 ? WordTransition.None : WordTransition.Completed(word);
+        return word.Length == 0 ? WordTransition.None : WordTransition.Completed(word, stroke.Output);
     }
 
     private WordTransition OnHardBoundary(KeyStroke stroke)
@@ -84,7 +84,7 @@ internal sealed class WordBuffer
             _lastCompleted = new WordSnapshot(_strokes.ToArray(), Concat(_strokes), stroke.Output);
         }
         _strokes.Clear();
-        return word.Length == 0 ? WordTransition.None : WordTransition.Completed(word);
+        return word.Length == 0 ? WordTransition.None : WordTransition.Completed(word, stroke.Output);
     }
 
     private void PopLast()

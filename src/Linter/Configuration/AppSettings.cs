@@ -50,10 +50,25 @@ internal sealed class AppSettings
     public List<string> ExcludedProcesses { get; set; } = new();
 
     /// <summary>
-    /// Optional path to a <c>.wav</c> played instead of the system beep on a
-    /// detected misspelling. Falls back to the beep if null or missing.
+    /// The <c>.wav</c> played on a detected misspelling. A bare file name
+    /// ("tick.wav") is one of the built-in sounds shipped in the
+    /// <c>Sounds</c> folder next to the exe; a rooted path is the user's own
+    /// file. Null means the system beep, which is also the fallback if the
+    /// file is missing.
     /// </summary>
     public string? SoundFile { get; set; }
+
+    /// <summary>
+    /// Writes a diagnostic trace to <c>%AppData%\Linter\debug.log</c>. Off by
+    /// default: the trace contains the words being typed, so it should only
+    /// exist while someone is actively debugging.
+    /// </summary>
+    public bool DebugLog { get; set; }
+
+    /// <summary>
+    /// Interface language: "en", "ru", "uk", or "auto" to follow Windows.
+    /// </summary>
+    public string Language { get; set; } = "auto";
 
     public HotkeyConfig Hotkeys { get; set; } = new();
 }

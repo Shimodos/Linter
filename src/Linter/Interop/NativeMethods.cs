@@ -27,12 +27,38 @@ internal static class NativeMethods
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     public static extern IntPtr GetModuleHandle(string? lpModuleName);
 
+    // ---- Message loop for the mouse-hook thread ----
+    [DllImport("user32.dll")]
+    public static extern int GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool PostThreadMessage(uint idThread, uint msg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("kernel32.dll")]
+    public static extern uint GetCurrentThreadId();
+
     // ---- Input ----
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint SendInput(uint nInputs, [In] INPUT[] pInputs, int cbSize);
 
     [DllImport("user32.dll")]
     public static extern short GetKeyState(int nVirtKey);
+
+    /// <summary>Negative (top bit set) while the key is physically down right now.</summary>
+    [DllImport("user32.dll")]
+    public static extern short GetAsyncKeyState(int vKey);
+
+    /// <summary>
+    /// Which key types <paramref name="ch"/> under a layout: low byte is the
+    /// virtual key, high byte the shift state (1 Shift, 2 Ctrl, 4 Alt).
+    /// Returns -1 when the layout cannot type the character.
+    /// </summary>
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern short VkKeyScanEx(char ch, IntPtr dwhkl);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern uint MapVirtualKeyEx(uint uCode, uint uMapType, IntPtr dwhkl);
 
     // CharSet.Unicode is REQUIRED here. Without it, StringBuilder is
     // marshaled as ANSI: ToUnicodeEx writes UTF-16, but the marshaling

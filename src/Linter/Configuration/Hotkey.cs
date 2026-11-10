@@ -19,15 +19,23 @@ internal sealed class Hotkey
         Modifiers = modifiers;
     }
 
+    /// <summary>A hotkey with no key is switched off and never matches.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsSet => VirtualKey != 0;
+
+    public static Hotkey None => new(0, KeyModifiers.None);
+
     public bool Matches(KeyStroke stroke)
     {
-        if (stroke.VirtualKey != VirtualKey) return false;
+        if (!IsSet || stroke.VirtualKey != VirtualKey) return false;
         // When the hotkey itself is a modifier (Alt, Ctrl, Shift, Win), its
         // own bit will be set in stroke.Modifiers — the press of Alt is
         // both "Alt held" and "Alt pressed". Mask it out before comparing.
         var captured = Normalize(stroke.Modifiers) & ~SelfModifier(VirtualKey);
         return captured == Normalize(Modifiers);
     }
+
+    public bool SameAs(Hotkey other) => VirtualKey == other.VirtualKey && Normalize(Modifiers) == Normalize(other.Modifiers);
 
     private static KeyModifiers Normalize(KeyModifiers mods) => mods & ~KeyModifiers.CapsLock;
 

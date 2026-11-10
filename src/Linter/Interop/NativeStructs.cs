@@ -14,6 +14,18 @@ internal struct KBDLLHOOKSTRUCT
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct MSG
+{
+    public IntPtr Hwnd;
+    public uint Message;
+    public IntPtr WParam;
+    public IntPtr LParam;
+    public uint Time;
+    public int PtX;
+    public int PtY;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct INPUT
 {
     public uint Type;
