@@ -16,6 +16,9 @@ internal sealed class LayoutConverter
     private readonly LayoutSwitcher _switcher;
     private readonly SpellChecker _spell;
 
+    /// <summary>The layout the last dictionary-confirmed conversion went to.</summary>
+    private IntPtr _lastTarget;
+
     public LayoutConverter(InputSimulator input, LayoutSwitcher switcher, SpellChecker spell)
     {
         _input = input;
@@ -25,8 +28,8 @@ internal sealed class LayoutConverter
 
     /// <summary>
     /// Converts the snapshot in place. Returns the data needed to undo the
-    /// edit, or <c>null</c> if nothing was changed (empty buffer, or no
-    /// candidate produced a real word).
+    /// edit, or <c>null</c> if nothing was changed (empty buffer, or the
+    /// text already reads as real words and no other layout does better).
     /// </summary>
     public ConversionResult? ConvertLastWord(WordSnapshot snapshot)
     {
@@ -43,7 +46,7 @@ internal sealed class LayoutConverter
         var winner = ChooseWinner(snapshot, current);
         if (winner is null)
         {
-            Log.Trace("  -> no candidate has any real words, leaving text as-is");
+            Log.Trace("  -> nothing reads better than the text as it stands, leaving it");
             return null;
         }
 
@@ -68,17 +71,28 @@ internal sealed class LayoutConverter
 
     /// <summary>
     /// Picks the layout whose rendering has the most spell-correct words.
-    /// Returns null if no candidate produces any real word — in that case
-    /// the original text is left alone (better than rewriting it into
-    /// something equally meaningless).
+    /// <para>
+    /// If no rendering has a real word, the phrase may simply contain a typo
+    /// ("ghdbtn" → "првиет"). The user pressed the hotkey because the text is
+    /// wrong, so when the text as it stands has no real word either, it is
+    /// still converted — to the other alphabet, where the spell signal and
+    /// the fix hotkey can then deal with the typo. Text that already reads
+    /// as real words is never rewritten into something meaningless.
+    /// </para>
     /// </summary>
-    private LayoutCandidate? ChooseWinner(WordSnapshot snapshot, IntPtr currentLayout)
+    internal LayoutCandidate? ChooseWinner(WordSnapshot snapshot, IntPtr currentLayout)
     {
         LayoutCandidate? best = null;
         var bestCorrect = 0;
+        LayoutCandidate? fallback = null;
+        var originalScript = WordScripts.Detect(snapshot.Text);
 
         foreach (var candidate in LayoutCandidates.ForOtherLayouts(snapshot, currentLayout))
         {
+            // Russian and Ukrainian layouts type most words identically.
+            // Retyping the same text just to switch the layout is not a conversion.
+            if (candidate.Text == snapshot.Text) continue;
+
             var (correct, total) = CountCorrectWords(candidate.Text);
             Log.Trace($"  candidate layout=0x{candidate.Layout.ToInt64():X8} text=\"{candidate.Text}\" correct={correct}/{total}");
             if (correct > bestCorrect)
@@ -86,9 +100,30 @@ internal sealed class LayoutConverter
                 bestCorrect = correct;
                 best = candidate;
             }
+
+            // A fallback has to be in another alphabet: re-rendering Latin
+            // text under another Latin layout changes next to nothing. Among
+            // several (Russian, Ukrainian) prefer the one converted to last.
+            var script = WordScripts.Detect(candidate.Text);
+            if (script != WordScript.Unknown && script != originalScript
+                && (fallback is null || candidate.Layout == _lastTarget))
+            {
+                fallback = candidate;
+            }
         }
 
-        return bestCorrect > 0 ? best : null;
+        if (bestCorrect > 0)
+        {
+            _lastTarget = best!.Value.Layout;
+            return best;
+        }
+
+        if (fallback is not null && CountCorrectWords(snapshot.Text).Correct == 0)
+        {
+            Log.Trace("  -> no real words either way; converting to the other alphabet anyway");
+            return fallback;
+        }
+        return null;
     }
 
     private (int Correct, int Total) CountCorrectWords(string phrase)

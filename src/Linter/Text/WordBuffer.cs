@@ -72,20 +72,25 @@ internal sealed class WordBuffer
         // The soft boundary completes a word but keeps the phrase alive,
         // so the boundary stroke itself joins the phrase as a separator.
         var word = ExtractTrailingWord();
+        var layout = LastLayout();
         _strokes.Add(stroke);
-        return word.Length == 0 ? WordTransition.None : WordTransition.Completed(word, stroke.Output);
+        return word.Length == 0 ? WordTransition.None : WordTransition.Completed(word, stroke.Output, layout);
     }
 
     private WordTransition OnHardBoundary(KeyStroke stroke)
     {
         var word = ExtractTrailingWord();
+        var layout = LastLayout();
         if (_strokes.Count > 0)
         {
             _lastCompleted = new WordSnapshot(_strokes.ToArray(), Concat(_strokes), stroke.Output);
         }
         _strokes.Clear();
-        return word.Length == 0 ? WordTransition.None : WordTransition.Completed(word, stroke.Output);
+        return word.Length == 0 ? WordTransition.None : WordTransition.Completed(word, stroke.Output, layout);
     }
+
+    /// <summary>The layout of the most recent stroke — for a just-finished word, its last letter.</summary>
+    private IntPtr LastLayout() => _strokes.Count > 0 ? _strokes[^1].Layout : IntPtr.Zero;
 
     private void PopLast()
     {

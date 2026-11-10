@@ -22,8 +22,11 @@ namespace Linter.Shell;
 /// </summary>
 internal sealed class LinterApplicationContext : ApplicationContext
 {
-    /// <summary>A word the spell checker just rejected, and the boundary typed after it.</summary>
-    private readonly record struct FlaggedWord(string Word, string Trailing);
+    /// <summary>
+    /// A word the spell checker just rejected, the boundary typed after it,
+    /// and the dictionaries that judged it (the fix comes from the same ones).
+    /// </summary>
+    private readonly record struct FlaggedWord(string Word, string Trailing, IReadOnlyList<string> Languages);
 
     private readonly AppSettings _settings;
     private readonly SettingsStore _settingsStore;
@@ -146,8 +149,14 @@ internal sealed class LinterApplicationContext : ApplicationContext
         // What we buffered describes the text before the caret in one
         // particular window. After a click or a window switch it describes
         // nothing — acting on it would delete text somewhere else.
-        // (Non-short-circuit "|": both checks must run so both reset.)
-        if (_mouse.ConsumeClick() | ForegroundChanged()) DropTypingState();
+        // Both checks always run: each one also resets its own flag.
+        var clicked = _mouse.ConsumeClick();
+        var switched = ForegroundChanged();
+        if (clicked || switched)
+        {
+            if (!_buffer.Snapshot().IsEmpty) Log.Trace($"buffer dropped: {(clicked ? "mouse click" : "window switch")}");
+            DropTypingState();
+        }
 
         var stroke = e.Stroke;
         var hotkeys = _settings.Hotkeys;
@@ -203,18 +212,23 @@ internal sealed class LinterApplicationContext : ApplicationContext
 
         // Any real keystroke invalidates the pending undo and fix (but not
         // bare modifiers/dead keys, so Shift-then-hotkey still works).
-        if (WordBoundary.Classify(stroke) != StrokeKind.Ignored)
+        var kind = WordBoundary.Classify(stroke);
+        if (kind != StrokeKind.Ignored)
         {
             _pendingUndo = null;
             _pendingFix = null;
             _typingSerial++;
+        }
+        if (kind == StrokeKind.Invalidates)
+        {
+            Log.Trace($"buffer dropped: key 0x{stroke.VirtualKey:X2} modifiers={stroke.Modifiers}");
         }
 
         var transition = _buffer.Apply(stroke);
         if (transition.WordCompleted && _settings.SpellCheckEnabled)
         {
             var serial = _typingSerial;
-            Defer(() => CheckSpelling(transition.CompletedWord, transition.Boundary, serial));
+            Defer(() => CheckSpelling(transition, serial));
         }
     }
 
@@ -273,10 +287,16 @@ internal sealed class LinterApplicationContext : ApplicationContext
 
     // ---------------------------------------------------------------- deferred work
 
-    private void CheckSpelling(string word, string boundary, int serial)
+    private void CheckSpelling(WordTransition completed, int serial)
     {
-        var ok = _spell.IsCorrect(word, _settings.SpellCheckLanguages);
-        Log.Trace($"word completed: \"{word}\" correct={ok}");
+        var word = completed.CompletedWord;
+        var boundary = completed.Boundary;
+
+        // Only the dictionary of the language being typed gets a say: a
+        // Russian typo must not pass just because Ukrainian has such a word.
+        var languages = SignalLanguages.For(_settings.SpellCheckLanguages, SignalLanguages.OfLayout(completed.Layout));
+        var ok = _spell.IsCorrect(word, languages);
+        Log.Trace($"word completed: \"{word}\" checked against [{string.Join(", ", languages)}] correct={ok}");
         if (ok) return;
 
         _sound.PlayMisspelledSignal();
@@ -287,7 +307,7 @@ internal sealed class LinterApplicationContext : ApplicationContext
         // not Enter, which may already have sent the message).
         if (serial == _typingSerial && IsRetypable(boundary))
         {
-            _pendingFix = new FlaggedWord(word, boundary);
+            _pendingFix = new FlaggedWord(word, boundary, languages);
         }
     }
 
@@ -303,7 +323,7 @@ internal sealed class LinterApplicationContext : ApplicationContext
 
     private void FixWord(FlaggedWord flagged)
     {
-        var suggestion = _spell.Suggest(flagged.Word, _settings.SpellCheckLanguages);
+        var suggestion = _spell.Suggest(flagged.Word, flagged.Languages);
         Log.Trace($"fix | \"{flagged.Word}\" → {(suggestion is null ? "no suggestion" : $"\"{suggestion}\"")}");
         if (suggestion is null) return;
 

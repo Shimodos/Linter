@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Linter.Configuration;
+using Linter.Diagnostics;
 using Linter.Interop;
 
 namespace Linter.Services;
@@ -65,11 +66,19 @@ internal sealed class SoundNotifier
             if (File.Exists(path))
             {
                 var flags = NativeConstants.SND_FILENAME | NativeConstants.SND_ASYNC;
-                if (NativeMethods.PlaySound(path, IntPtr.Zero, flags)) return;
+                var played = NativeMethods.PlaySound(path, IntPtr.Zero, flags);
+                Log.Trace($"sound: PlaySound(\"{path}\") → {played}");
+                if (played) return;
+            }
+            else
+            {
+                Log.Trace($"sound: \"{path}\" not found, falling back to the system beep");
             }
         }
 
-        if (NativeMethods.MessageBeep(NativeConstants.MB_ICONEXCLAMATION)) return;
+        var beeped = NativeMethods.MessageBeep(NativeConstants.MB_ICONEXCLAMATION);
+        Log.Trace($"sound: MessageBeep → {beeped}");
+        if (beeped) return;
         // Fallback for the rare host where MessageBeep fails.
         NativeMethods.Beep(800, 60);
     }

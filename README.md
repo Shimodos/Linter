@@ -81,14 +81,17 @@ replay the same presses under a different layout later.
 - **Conversion.** On the hotkey the phrase is replayed under every *other* installed layout
   (`ToUnicodeEx`) and each result is spell-checked. The one with the most real words wins:
   Linter backspaces the original, switches the layout and types the winner. If no candidate
-  has a real word, the text is left untouched.
+  has a real word but the text as it stands has none either (a wrong-layout word with a typo,
+  `ghdbtn` → «првиет»), it is still moved to the other alphabet, where the typo can be fixed.
+  Text that already reads as real words is never touched.
 - **Selection.** For selected text there are no key presses to replay, so it works backwards:
   it asks each layout which keys would have typed those characters (`VkKeyScanEx`), replays
   them under the other layouts and keeps the best-spelled result, or leaves the text alone if
   it already reads fine. The text travels through the clipboard, whose previous text is put back.
-- **Script-aware spelling.** A word is only checked against dictionaries of a matching script.
-  A Cyrillic dictionary has no opinion on Latin text and would otherwise call any Latin
-  gibberish "correct".
+- **Layout-aware spelling.** A word is judged only by the dictionary of the layout it was typed
+  under. Russian and Ukrainian share an alphabet, and "any Cyrillic dictionary accepts it"
+  would let a Russian typo pass whenever it happens to be a Ukrainian word. For the same
+  reason a Cyrillic dictionary is never asked about Latin text.
 - **Off the hook thread.** Spell checking (COM) and typing are never done inside the hook
   callback; they are posted to the message loop, so the hook returns at once and Windows never
   disables it. The mouse hook that notices clicks lives on its own thread for the same reason.
