@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" width="760" height="250" role="img" aria-label="Animation: the text “ghbdtn? rfr ltkf” is typed with the wrong keyboard layout, Right Alt is pressed, and it becomes “привет, как дела”. A second press undoes it.">
+<style>
+.line{font:26px Consolas,"Cascadia Mono","DejaVu Sans Mono",Menlo,monospace;fill:#fff;opacity:0;white-space:pre}
+.note{font:15px "Segoe UI",system-ui,-apple-system,sans-serif;fill:#9aa3b8;opacity:0}
+.title{font:600 13px "Segoe UI",system-ui,-apple-system,sans-serif;fill:#9aa3b8}
+.keycap{fill:#262d44;animation:keyfill 11700ms step-end infinite}
+.keylabel{font:600 13px "Segoe UI",system-ui,-apple-system,sans-serif;fill:#c9cfdd;animation:keytext 11700ms step-end infinite}
+@keyframes t0{0.000%{opacity:1}0.897%{opacity:0}}
+@keyframes t1{0%{opacity:0}0.897%{opacity:1}1.795%{opacity:0}}
+@keyframes t2{0%{opacity:0}1.795%{opacity:1}2.692%{opacity:0}}
+@keyframes t3{0%{opacity:0}2.692%{opacity:1}3.590%{opacity:0}25.726%{opacity:1}26.197%{opacity:0}}
+@keyframes t4{0%{opacity:0}3.590%{opacity:1}4.487%{opacity:0}}
+@keyframes t5{0%{opacity:0}4.487%{opacity:1}5.385%{opacity:0}}
+@keyframes t6{0%{opacity:0}5.385%{opacity:1}6.282%{opacity:0}}
+@keyframes t7{0%{opacity:0}6.282%{opacity:1}7.179%{opacity:0}25.256%{opacity:1}25.726%{opacity:0}}
+@keyframes t8{0%{opacity:0}7.179%{opacity:1}8.077%{opacity:0}}
+@keyframes t9{0%{opacity:0}8.077%{opacity:1}8.974%{opacity:0}}
+@keyframes t10{0%{opacity:0}8.974%{opacity:1}9.872%{opacity:0}}
+@keyframes t11{0%{opacity:0}9.872%{opacity:1}10.769%{opacity:0}24.786%{opacity:1}25.256%{opacity:0}}
+@keyframes t12{0%{opacity:0}10.769%{opacity:1}11.667%{opacity:0}}
+@keyframes t13{0%{opacity:0}11.667%{opacity:1}12.564%{opacity:0}}
+@keyframes t14{0%{opacity:0}12.564%{opacity:1}13.462%{opacity:0}}
+@keyframes t15{0%{opacity:0}13.462%{opacity:1}24.786%{opacity:0}57.094%{opacity:1}76.068%{opacity:0}}
+@keyframes t16{0%{opacity:0}26.667%{opacity:1}27.009%{opacity:0}}
+@keyframes t17{0%{opacity:0}27.009%{opacity:1}27.350%{opacity:0}}
+@keyframes t18{0%{opacity:0}27.350%{opacity:1}27.692%{opacity:0}}
+@keyframes t19{0%{opacity:0}27.692%{opacity:1}28.034%{opacity:0}}
+@keyframes t20{0%{opacity:0}28.034%{opacity:1}28.376%{opacity:0}}
+@keyframes t21{0%{opacity:0}28.376%{opacity:1}28.718%{opacity:0}}
+@keyframes t22{0%{opacity:0}28.718%{opacity:1}29.060%{opacity:0}}
+@keyframes t23{0%{opacity:0}29.060%{opacity:1}29.402%{opacity:0}}
+@keyframes t24{0%{opacity:0}29.402%{opacity:1}29.744%{opacity:0}}
+@keyframes t25{0%{opacity:0}29.744%{opacity:1}30.085%{opacity:0}}
+@keyframes t26{0%{opacity:0}30.085%{opacity:1}30.427%{opacity:0}}
+@keyframes t27{0%{opacity:0}30.427%{opacity:1}30.769%{opacity:0}}
+@keyframes t28{0%{opacity:0}30.769%{opacity:1}31.111%{opacity:0}}
+@keyframes t29{0%{opacity:0}31.111%{opacity:1}31.453%{opacity:0}}
+@keyframes t30{0%{opacity:0}31.453%{opacity:1}31.795%{opacity:0}}
+@keyframes t31{0%{opacity:0}31.795%{opacity:1}57.094%{opacity:0}76.068%{opacity:1}}
+@keyframes n32{0.000%{opacity:1}24.786%{opacity:0}}
+@keyframes n33{0%{opacity:0}32.137%{opacity:1}57.094%{opacity:0}76.068%{opacity:1}}
+@keyframes n34{0%{opacity:0}57.094%{opacity:1}76.068%{opacity:0}}
+@keyframes keyfill{0%{fill:#262d44}22.051%{fill:#5b8def}24.786%{fill:#262d44}54.359%{fill:#5b8def}57.094%{fill:#262d44}73.333%{fill:#5b8def}76.068%{fill:#262d44}}
+@keyframes keytext{0%{fill:#c9cfdd}22.051%{fill:#ffffff}24.786%{fill:#c9cfdd}54.359%{fill:#ffffff}57.094%{fill:#c9cfdd}73.333%{fill:#ffffff}76.068%{fill:#c9cfdd}}
+@media (prefers-reduced-motion:reduce){
+.line,.note,.keycap,.keylabel{animation:none!important}
+.still{opacity:1}
+}
+</style>
+<rect width="760" height="250" rx="16" fill="#181e30"/>
+<rect x="0.5" y="0.5" width="759" height="249" rx="15.5" fill="none" stroke="#2c3550"/>
+<circle cx="30" cy="30" r="5.5" fill="#39425e"/><circle cx="50" cy="30" r="5.5" fill="#39425e"/><circle cx="70" cy="30" r="5.5" fill="#39425e"/>
+<text class="title" x="92" y="34.5">Any app you type in</text>
+<line x1="0" y1="58" x2="760" y2="58" stroke="#2c3550"/>
+<text class="line" x="40" y="128" style="animation:t0 11700ms step-end infinite">g</text>
+<text class="line" x="40" y="128" style="animation:t1 11700ms step-end infinite">gh</text>
+<text class="line" x="40" y="128" style="animation:t2 11700ms step-end infinite">ghb</text>
+<text class="line" x="40" y="128" style="animation:t3 11700ms step-end infinite">ghbd</text>
+<text class="line" x="40" y="128" style="animation:t4 11700ms step-end infinite">ghbdt</text>
+<text class="line" x="40" y="128" style="animation:t5 11700ms step-end infinite">ghbdtn</text>
+<text class="line" x="40" y="128" style="animation:t6 11700ms step-end infinite">ghbdtn?</text>
+<text class="line" x="40" y="128" style="animation:t7 11700ms step-end infinite">ghbdtn? </text>
+<text class="line" x="40" y="128" style="animation:t8 11700ms step-end infinite">ghbdtn? r</text>
+<text class="line" x="40" y="128" style="animation:t9 11700ms step-end infinite">ghbdtn? rf</text>
+<text class="line" x="40" y="128" style="animation:t10 11700ms step-end infinite">ghbdtn? rfr</text>
+<text class="line" x="40" y="128" style="animation:t11 11700ms step-end infinite">ghbdtn? rfr </text>
+<text class="line" x="40" y="128" style="animation:t12 11700ms step-end infinite">ghbdtn? rfr l</text>
+<text class="line" x="40" y="128" style="animation:t13 11700ms step-end infinite">ghbdtn? rfr lt</text>
+<text class="line" x="40" y="128" style="animation:t14 11700ms step-end infinite">ghbdtn? rfr ltk</text>
+<text class="line" x="40" y="128" style="animation:t15 11700ms step-end infinite">ghbdtn? rfr ltkf</text>
+<text class="line" x="40" y="128" style="animation:t16 11700ms step-end infinite">п</text>
+<text class="line" x="40" y="128" style="animation:t17 11700ms step-end infinite">пр</text>
+<text class="line" x="40" y="128" style="animation:t18 11700ms step-end infinite">при</text>
+<text class="line" x="40" y="128" style="animation:t19 11700ms step-end infinite">прив</text>
+<text class="line" x="40" y="128" style="animation:t20 11700ms step-end infinite">приве</text>
+<text class="line" x="40" y="128" style="animation:t21 11700ms step-end infinite">привет</text>
+<text class="line" x="40" y="128" style="animation:t22 11700ms step-end infinite">привет,</text>
+<text class="line" x="40" y="128" style="animation:t23 11700ms step-end infinite">привет, </text>
+<text class="line" x="40" y="128" style="animation:t24 11700ms step-end infinite">привет, к</text>
+<text class="line" x="40" y="128" style="animation:t25 11700ms step-end infinite">привет, ка</text>
+<text class="line" x="40" y="128" style="animation:t26 11700ms step-end infinite">привет, как</text>
+<text class="line" x="40" y="128" style="animation:t27 11700ms step-end infinite">привет, как </text>
+<text class="line" x="40" y="128" style="animation:t28 11700ms step-end infinite">привет, как д</text>
+<text class="line" x="40" y="128" style="animation:t29 11700ms step-end infinite">привет, как де</text>
+<text class="line" x="40" y="128" style="animation:t30 11700ms step-end infinite">привет, как дел</text>
+<text class="line still" x="40" y="128" style="animation:t31 11700ms step-end infinite">привет, как дела</text>
+<line x1="0" y1="178" x2="760" y2="178" stroke="#2c3550"/>
+<rect class="keycap" x="40" y="194" width="92" height="30" rx="7" stroke="#39425e"/>
+<text class="keylabel" x="86" y="213.5" text-anchor="middle">Right Alt</text>
+<text class="note" x="150" y="213" style="animation:n32 11700ms step-end infinite">Typed with the wrong layout on…</text>
+<text class="note still" x="150" y="213" style="animation:n33 11700ms step-end infinite">Retyped in Russian. The layout is switched too.</text>
+<text class="note" x="150" y="213" style="animation:n34 11700ms step-end infinite">Pressed again: undone.</text>
+</svg>
