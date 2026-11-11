@@ -156,6 +156,8 @@ meant to be read top to bottom by humans, not just compiled.
 | `%AppData%\Linter\settings.json` | settings; can be edited by hand |
 | `%AppData%\Linter\debug.log` | diagnostic trace, **only if you enable it** — it records typed words |
 | `%AppData%\Linter\crash.log` | unhandled exceptions |
+| `%AppData%\Linter\lifecycle.log` | when the app started and how it stopped (exit, sleep, resume) — never anything typed |
+| `%AppData%\Linter\alive.txt` | rewritten once a minute while running; tells when a run that was killed was last alive |
 
 "Start with Windows" is a value in the per-user `Run` registry key, not in the file.
 

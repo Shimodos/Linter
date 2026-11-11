@@ -43,6 +43,7 @@ internal sealed class LinterApplicationContext : ApplicationContext
     private readonly SoundNotifier _sound;
 
     private readonly TrayIcon _tray;
+    private readonly System.Windows.Forms.Timer _heartbeat;
     private SettingsForm? _settingsForm;
 
     /// <summary>
@@ -115,6 +116,12 @@ internal sealed class LinterApplicationContext : ApplicationContext
         _tray = new TrayIcon(_settings, OnToggleEnabled, OnOpenSettings, OnExit,
             lastFlaggedWord: () => _lastFlaggedWord,
             onIgnoreLastFlagged: IgnoreLastFlagged);
+
+        // "Still running" once a minute, for working out when a run ended.
+        _heartbeat = new System.Windows.Forms.Timer { Interval = 60_000 };
+        _heartbeat.Tick += (_, _) => Lifecycle.Heartbeat();
+        _heartbeat.Start();
+        Lifecycle.Heartbeat();
     }
 
     // ---------------------------------------------------------------- keyboard
@@ -450,6 +457,7 @@ internal sealed class LinterApplicationContext : ApplicationContext
 
     private void OnExit()
     {
+        Lifecycle.Record("exit chosen in the tray menu");
         _settingsForm?.Close();
         ExitThread();
     }
@@ -462,6 +470,7 @@ internal sealed class LinterApplicationContext : ApplicationContext
             _hook.KeyReleased -= OnKeyReleased;
             _hook.Dispose();
             _mouse.Dispose();
+            _heartbeat.Dispose();
             _tray.Dispose();
             _spell.Dispose();
         }

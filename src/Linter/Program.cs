@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Windows.Forms;
+using Linter.Diagnostics;
 using Linter.Shell;
 
 namespace Linter;
@@ -22,8 +23,12 @@ internal static class Program
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         Application.ThreadException += (_, e) => CrashReporter.Report(e.Exception);
         AppDomain.CurrentDomain.UnhandledException += (_, e) => CrashReporter.Report(e.ExceptionObject as Exception);
+        Lifecycle.Begin();
 
         using var context = new LinterApplicationContext();
         Application.Run(context);
+        // Reached on a tray "Exit" and on anything else that ends the message
+        // loop. A run with no line like this after its START was killed.
+        Lifecycle.Record("message loop ended");
     }
 }
